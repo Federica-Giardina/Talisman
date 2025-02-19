@@ -148,8 +148,6 @@ ggplot(new_data, aes(x = time, y = Predicted, color = Treatment)) +
 # increasing values until t* and then decreasing
 
 
-
-
 #############Adding bdnf to the LMM model to check if the effects change ######
 
 library(readxl)
@@ -239,6 +237,106 @@ doc <- read_docx() %>%
 
 # Save the document
 print(doc, target = "multiple_models_results_bdnf.docx")
+
+######################## add gender and disease stage ####
+
+library(readxl)
+
+extra_covariate_analysis_FG <- read_excel("consulting/trials/N0f1/Talisman/extra covariate analysis FG.xlsx", 
+                                             col_types = c("text", "text", "numeric", 
+                                                                    "numeric"))
+
+extra_covariate_analysis_FG |> rename(ID = PD, disease = `disease group` ) -> extra_covariate
+
+SRS_combined_long |> left_join(extra_covariate) -> SRS_combined_long_extra
+
+####################################################
+
+lmm_hypoxia_sympt_extra <- lmer(value~relevel(factor(Treatment), ref=5)*time+(0+time|ID)+factor(gender)+
+                                  factor(disease), 
+                               data = SRS_combined_long_extra %>% filter(type == "sympt") )
+
+
+summary(lmm_hypoxia_sympt_extra)
+
+
+
+lmm_hypoxia_medurge_extra <- lmer(value~relevel(factor(Treatment), ref=5)*time +(0+time|ID)+factor(gender)+
+                                    factor(disease), 
+                                 data = SRS_combined_long_extra %>% filter(type == "medurge") )
+
+summary(lmm_hypoxia_medurge_extra)
+
+
+lmm_hypoxia_global_extra <- lmer(value~relevel(factor(Treatment), ref=5)*time +(0+time|ID)+factor(gender)+
+                                  factor(disease), 
+                                data = SRS_combined_long_extra %>% filter(type == "global") )
+
+
+
+summary(lmm_hypoxia_global_extra)
+
+results_model_sympt <- extract_results(lmm_hypoxia_sympt_extra)
+results_model_medurge <- extract_results(lmm_hypoxia_medurge_extra)
+results_model_global <- extract_results(lmm_hypoxia_global_extra)
+
+
+
+library(flextable)
+library(officer)
+
+# Create flextables for each model
+ft1 <- flextable(results_model_sympt) %>%
+  set_header_labels(
+    Term = "Term",
+    Estimate = "Estimate",
+    CI_Lower = "Lower CI",
+    CI_Upper = "Upper CI"
+  ) %>%
+  theme_vanilla() %>%
+  autofit()
+
+ft2 <- flextable(results_model_medurge) %>%
+  set_header_labels(
+    Term = "Term",
+    Estimate = "Estimate",
+    CI_Lower = "Lower CI",
+    CI_Upper = "Upper CI"
+  ) %>%
+  theme_vanilla() %>%
+  autofit()
+
+
+ft3 <- flextable(results_model_global) %>%
+  set_header_labels(
+    Term = "Term",
+    Estimate = "Estimate",
+    CI_Lower = "Lower CI",
+    CI_Upper = "Upper CI"
+  ) %>%
+  theme_vanilla() %>%
+  autofit()
+
+
+
+
+# Create a Word document and add content
+doc <- read_docx() %>%
+  body_add_par("Results for Model sympt", style = "heading 1") %>%
+  body_add_flextable(ft1) %>%
+  body_add_par("") %>%
+  body_add_par("Results for Model medurge", style = "heading 1") %>%
+  body_add_flextable(ft2) %>%
+  body_add_par("") %>%
+  body_add_par("Results for Model global", style = "heading 1") %>%
+  body_add_flextable(ft3) %>%
+  body_add_par("")  # Add space between sections
+# Add space between sections
+
+# Save the document
+print(doc, target = "multiple_models_results_extra.docx")
+
+
 
 
 
