@@ -31,7 +31,7 @@ data <- list(y_p = SRS_combined %>% filter(id==ID) %>% filter(Treatment==5)%>% p
              y_t = t(structure(c(SRS_combined %>% filter(id==ID) %>%
                                    filter(Treatment!=5)%>% pull(auc_SRS)/time_l),
                                dim=c(4,2))),
-             np = 2,#dim (SRS_combined%>%filter(id==ID))[1],
+             np = 2,
              type = SRS_combined %>%filter(id==ID)%>% pull(Treatment),
              nt = 2, K=4,mcid=0.75)
 
@@ -187,6 +187,7 @@ model.samples <- coda.samples(model.fit, parameters, n.iter=100000)
 
 
 plot(model.samples)
+
 Bayes_symp <- summary(model.samples)
 
 # Extract components from the summary object
@@ -235,6 +236,42 @@ data <- list(n = 20, y_p = t(structure(c(SRS_combined %>% filter(Treatment==5)%>
              #             type = SRS_combined %>%filter(id==ID)%>% pull(Treatment),
              nt = 2,K=4,mcid=0.75)
 
+
+model.fit <- jags.model(file= textConnection(model_aggregated),
+                        data=data, n.chains = 3)
+
+model.samples <- coda.samples(model.fit, parameters, n.iter=100000)
+
+
+plot(model.samples)
+Bayes_medurge <- summary(model.samples)
+
+# Extract components from the summary object
+stats_df <- as.data.frame(Bayes_medurge$statistics)
+quant_df <- as.data.frame(Bayes_medurge$quantiles)
+
+# Add a column with the parameter names if they are stored as row names
+stats_df$Parameter <- rownames(stats_df)
+quant_df$Parameter <- rownames(quant_df)
+
+# Merge the two data frames by the Parameter column
+combined_df <- merge(stats_df, quant_df, by = "Parameter")
+
+# reorder the columns to have Parameter first
+combined_df <- combined_df[, c("Parameter", setdiff(names(combined_df), "Parameter"))]
+
+
+
+# Round all numeric columns to 3 decimals
+combined_df_rounded <- combined_df
+numeric_cols <- sapply(combined_df_rounded, is.numeric)
+combined_df_rounded[numeric_cols] <- lapply(combined_df_rounded[numeric_cols], round, 3)
+
+
+write_xlsx(combined_df_rounded, "Bayes_medurge_summary.xlsx")
+
+
+
 ##############################################################
 data <- list(n = 20, y_p = t(structure(c(SRS_combined %>% filter(Treatment==5)%>% pull(auc_global)/time_l),
                                        dim=c(2,20))), 
@@ -254,3 +291,36 @@ data <- list(n = 20, y_p = t(structure(c(SRS_combined %>% filter(Treatment==5)%>
              np = 2,
              #             type = SRS_combined %>%filter(id==ID)%>% pull(Treatment),
              nt = 2,K=4,mcid=0.75)
+
+
+model.fit <- jags.model(file= textConnection(model_aggregated),
+                        data=data, n.chains = 3)
+
+model.samples <- coda.samples(model.fit, parameters, n.iter=100000)
+
+
+plot(model.samples)
+Bayes_global <- summary(model.samples)
+
+# Extract components from the summary object
+stats_df <- as.data.frame(Bayes_global$statistics)
+quant_df <- as.data.frame(Bayes_global$quantiles)
+
+# Add a column with the parameter names if they are stored as row names
+stats_df$Parameter <- rownames(stats_df)
+quant_df$Parameter <- rownames(quant_df)
+
+# Merge the two data frames by the Parameter column
+combined_df <- merge(stats_df, quant_df, by = "Parameter")
+
+# reorder the columns to have Parameter first
+combined_df <- combined_df[, c("Parameter", setdiff(names(combined_df), "Parameter"))]
+
+
+# Round all numeric columns to 3 decimals
+combined_df_rounded <- combined_df
+numeric_cols <- sapply(combined_df_rounded, is.numeric)
+combined_df_rounded[numeric_cols] <- lapply(combined_df_rounded[numeric_cols], round, 3)
+
+
+write_xlsx(combined_df_rounded, "Bayes_global_summary.xlsx")
