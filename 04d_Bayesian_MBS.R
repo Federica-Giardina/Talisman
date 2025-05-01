@@ -32,7 +32,7 @@ data <- list(n = 20, y_p = t(structure(c(MiniBES_combined %>% filter(Treatment==
              
              np = 2,
              #type = SRS_combined %>%filter(id==ID)%>% pull(Treatment),
-             nt = 2,K=4,mcid=4)
+             nt = 2,K=4,mcid=-4)
 
 model_aggregated <- 'model {
 
