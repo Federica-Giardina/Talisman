@@ -50,7 +50,7 @@ for( i in 1 : n ) {
   diff_patient[i,4] <-  mu_t4[i]-mu_p[i]
  
 for(j in 1:K){
-p_patient[i,j] <- 1-step(diff_patient[i,j]-mcid)
+p_patient[i,j] <- step(diff_patient[i,j]-mcid)
 
 }
   
@@ -71,7 +71,7 @@ p_patient[i,j] <- 1-step(diff_patient[i,j]-mcid)
   diff[4] <-  mu.t4-mu.p
       
 for(i in 1:K){
-p[i] <- 1-step(diff[i]-mcid)
+p[i] <- step(diff[i]-mcid)
 
 }
 
